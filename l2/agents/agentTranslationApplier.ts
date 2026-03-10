@@ -114,9 +114,9 @@ async function afterPromptStep(
 }
 
 async function createFiles(html: string, targetFolder: string, project: number, fileReference: string, originFolder: string) {
-    const files = Object.values(mls.stor.files).filter((file) => file.folder === originFolder && file.project === project);
+    const files = Object.values(mls.stor.files).filter((file) => file.folder.startsWith(originFolder) && file.project === project);
     for (let file of files) {
-        const storFileNew = await duplicateFile(file, targetFolder);
+        const storFileNew = await duplicateFile(file, originFolder, targetFolder);
         const ref = mls.stor.convertFileToFileReference(file);
         const refNew = mls.stor.convertFileToFileReference(storFileNew);
 
@@ -130,9 +130,11 @@ async function createFiles(html: string, targetFolder: string, project: number, 
 }
 
 
-async function duplicateFile(storFile: mls.stor.IFileInfo, newFolder: string): Promise<mls.stor.IFileInfo> {
+async function duplicateFile(storFile: mls.stor.IFileInfo, oldFolder: string, newFolder: string): Promise<mls.stor.IFileInfo> {
 
-    const keyToNewFile = mls.stor.getKeyToFile({ ...storFile, folder: newFolder });
+    let _folder = storFile.folder.replace(oldFolder, newFolder);
+
+    const keyToNewFile = mls.stor.getKeyToFile({ ...storFile, folder: _folder });
     const storFileDist = mls.stor.files[keyToNewFile];
     if (storFileDist) return storFileDist;
 
@@ -141,17 +143,17 @@ async function duplicateFile(storFile: mls.stor.IFileInfo, newFolder: string): P
 
     let source = await storFile.getContent();
     if (!source) throw new Error('[migrateFile] Impossible rename this file:' + storFile.shortName);
-    if (!newFolder) newFolder = storFile.folder;
+    if (!_folder) _folder = storFile.folder;
 
     if (storFile.level === 2 && typeof source === 'string') {
-        source = replaceTripleslashAndTag(storFile, storFile.project, storFile.shortName, newFolder, source);
+        source = replaceTripleslashAndTag(storFile, storFile.project, storFile.shortName, _folder, source);
     }
 
     const file = await createStorFile({
         project: storFile.project,
         shortName: storFile.shortName,
         level: storFile.level,
-        folder: newFolder,
+        folder: _folder,
         content: source,
         extension: storFile.extension,
         versionRef: '0'
