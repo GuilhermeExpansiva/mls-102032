@@ -7,13 +7,6 @@ import { setCodeLens } from '/_102027_/l2/codeLensLit.js';
 import { injectStyle, injectStyleAction } from '/_102027_/l2/processCssLit.js'
 
 export const requires: mls.l2.enhancement.IRequire[] = [ 
-    
-    {
-        type: "link",
-        name: "fontAwesome",
-        ref: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css',
-        args: 'stylesheet',
-    },
     {
         type: "import",
         name: "tailwind.js",

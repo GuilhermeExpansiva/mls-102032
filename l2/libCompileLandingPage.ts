@@ -18,7 +18,7 @@ export async function buildLandingPageByStor(stor: mls.stor.IFileInfo, language:
     let json = await getDependenciesByHtmlFile(stor, contentHTML, theme, true);
 
     const js = await buildJs(json, stor);
-    const content = await generateHTML(json, js, contentHTML);
+    const content = await generateHTML(project, json, js, contentHTML);
 
     return content
 }
@@ -111,12 +111,35 @@ async function buildJs(json: any, stor: mls.stor.IFileInfo) {
 
 }
 
-async function generateHTML(json: any, js: String, contentHTML: string) {
+async function getPreviewConfigByProject(project: number): Promise<any | undefined> {
+    if (!project) return;
+    const url = `/_${project}_/l2/project.js`
+    try {
+        const modulePrj = await import(url);
+        if (!modulePrj || !modulePrj.projectConfig || !modulePrj.projectConfig.masterFrontEnd || !modulePrj.projectConfig.masterFrontEnd.preview) return;
+
+        return modulePrj.projectConfig.masterFrontEnd;
+
+    } catch (err) {
+        console.error('no find project config');
+        return;
+    }
+}
+
+async function generateHTML(project: number, json: any, js: String, contentHTML: string) {
 
     const css = await getCss(json);
+    const info = await getPreviewConfigByProject(project);
+    console.info(info);
+    const metas = (info.meta || []).join('\n');
+
     let html = `
-    <html>
+    <html lang="en">
+
+
     <head>
+        ${info?.title ? `<title>${info.title}</title>` : '<title> Landing Page</title>'}
+        ${metas}        
         ${json.importsLinks.map((i: any) => { return `<link ref="${i.ref}" rel="${i.rel}"/>` })}
         ${css}
     </head>
